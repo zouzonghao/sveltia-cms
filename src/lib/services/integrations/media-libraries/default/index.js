@@ -64,7 +64,9 @@ export const transformFile = async (file, transformations) => {
       if (subType in transformations) {
         transformation = /** @type {Record<string, any>} */ (transformations)[subType];
       } else if ('raster_image' in transformations) {
-        transformation = transformations.raster_image;
+        // GIFs are typically animated, and re-encoding would flatten them to a single frame,
+        // so the catch-all transformation doesn’t apply unless GIF is explicitly configured
+        transformation = subType === 'gif' ? undefined : transformations.raster_image;
       }
     }
 

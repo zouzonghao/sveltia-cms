@@ -31,12 +31,13 @@ export const checkIfEncodingIsSupported = async (format) => {
 
 /**
  * Export Canvas data as an image blob. If the browser doesn’t support native encoding for the given
- * format (e.g. WebP on Safari), use the jSquash library as fallback.
+ * format (e.g. WebP on Safari, AVIF everywhere), use the jSquash library as fallback.
  * @param {OffscreenCanvas} canvas Canvas to be exported.
  * @param {object} [options] Options.
  * @param {string} [options.format] Format, like `webp`.
  * @param {number} [options.quality] Image quality between 0 and 100.
  * @returns {Promise<Blob>} Image blob.
+ * @throws {Error} If the format requires the jSquash fallback and it fails.
  * @see https://github.com/jamsinclair/jSquash
  */
 export const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85 } = {}) => {
@@ -56,7 +57,10 @@ export const exportCanvasAsBlob = async (canvas, { format = 'webp', quality = 85
 
       return new Blob([buffer], { type });
     } catch {
-      //
+      // Don’t fall back to `convertToBlob()` here: browsers silently produce a PNG blob for
+      // unsupported types, so the resulting file would have mismatched content. Throw an error
+      // instead, and let the caller upload the original file as is.
+      throw new Error(`jSquash encoding failed for ${format}`);
     }
   }
 

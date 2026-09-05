@@ -68,6 +68,6 @@ describe('Image Constants', () => {
   });
 
   test('RASTER_IMAGE_CONVERSION_FORMATS should contain expected conversion formats', () => {
-    expect(RASTER_IMAGE_CONVERSION_FORMATS).toEqual(['webp']);
+    expect(RASTER_IMAGE_CONVERSION_FORMATS).toEqual(['webp', 'avif', 'jpeg']);
   });
 });

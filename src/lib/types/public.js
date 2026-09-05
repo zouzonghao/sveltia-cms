@@ -52,10 +52,10 @@
  */
 
 /**
- * Supported raster image conversion format. We don’t support AVIF at this time because no browser
- * supports AVIF encoding natively and `@jsquash/avif` is slow. Meanwhile, browsers other than
- * Safari support WebP encoding and `@jsquash/webp` is relatively fast.
- * @typedef {'webp'} RasterImageConversionFormat
+ * Supported raster image conversion format. No browser supports AVIF encoding natively, so AVIF
+ * is encoded with the `@jsquash/avif` WASM library, which is slower than the native WebP
+ * encoding available on browsers other than Safari.
+ * @typedef {'webp' | 'avif' | 'jpeg'} RasterImageConversionFormat
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
  * @see https://stackoverflow.com/q/61206083
  */

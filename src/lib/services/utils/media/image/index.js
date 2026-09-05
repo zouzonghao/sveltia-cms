@@ -20,4 +20,4 @@ export const SUPPORTED_IMAGE_FORMATS = [...RASTER_IMAGE_FORMATS, ...VECTOR_IMAGE
 export const SUPPORTED_IMAGE_TYPES = [...RASTER_IMAGE_TYPES, ...VECTOR_IMAGE_TYPES];
 
 /** @type {RasterImageConversionFormat[]} */
-export const RASTER_IMAGE_CONVERSION_FORMATS = ['webp'];
+export const RASTER_IMAGE_CONVERSION_FORMATS = ['webp', 'avif', 'jpeg'];

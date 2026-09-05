@@ -12,7 +12,7 @@ vi.mock('$lib/services/app/dependencies', () => ({
 }));
 
 vi.mock('$lib/services/utils/media/image', () => ({
-  RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'jpeg', 'png', 'avif'],
+  RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'avif', 'jpeg'],
 }));
 
 // Mock the checkIfEncodingIsSupported function
@@ -49,11 +49,14 @@ describe('exportCanvasAsBlob', () => {
      */
     class MockOffscreenCanvas {
       /**
-       * Constructor for MockOffscreenCanvas.
+       * Constructor.
        */
       constructor() {
         this.getContext = vi.fn(() => mockContext);
-        this.convertToBlob = vi.fn(() => Promise.resolve(new Blob([''], { type: 'image/webp' })));
+        // Echo the requested type so that native encoding appears supported for any format
+        this.convertToBlob = vi.fn(({ type: requestedType } = {}) =>
+          Promise.resolve(new Blob([''], { type: requestedType ?? 'image/png' })),
+        );
       }
     }
 
@@ -169,20 +172,20 @@ describe('exportCanvasAsBlob', () => {
     expect(await result.arrayBuffer()).toEqual(mockEncodedBuffer.buffer);
   });
 
-  test('should handle jSquash fallback scenario', async () => {
+  test('should throw when the jSquash encoder fails to load', async () => {
     const mockLoadModule = vi.fn(() => Promise.reject(new Error('jSquash load failed')));
-    const mockBlob = new Blob(['fallback'], { type: 'image/png' });
     const { loadModule } = await import('$lib/services/app/dependencies');
 
     vi.mocked(loadModule).mockImplementation(mockLoadModule);
 
-    // Mock canvas to return the fallback blob when jSquash fails
-    mockCanvas.convertToBlob.mockResolvedValue(mockBlob);
+    // AVIF support has already been probed and cached as unsupported by the preceding test.
+    // The encoder failure must not silently fall back to `convertToBlob()`, which would
+    // produce a PNG blob with mismatched content
+    await expect(exportCanvasAsBlob(mockCanvas, { format: 'avif', quality: 90 })).rejects.toThrow(
+      'jSquash encoding failed for avif',
+    );
 
-    const result = await exportCanvasAsBlob(mockCanvas, { format: 'webp', quality: 95 });
-
-    expect(result).toBeInstanceOf(Blob);
-    expect(result.type).toBe('image/png');
+    expect(mockCanvas.convertToBlob).not.toHaveBeenCalled();
   });
 
   test('should handle PNG format', async () => {

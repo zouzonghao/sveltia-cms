@@ -8,9 +8,9 @@ vi.mock('$lib/services/integrations/media-libraries', () => ({
   getMediaLibraryOptions: vi.fn(),
 }));
 vi.mock('$lib/services/utils/media/image', () => ({
-  RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'jpeg', 'png'],
+  RASTER_IMAGE_CONVERSION_FORMATS: ['webp', 'avif', 'jpeg'],
   RASTER_IMAGE_EXTENSION_REGEX: /\b(?:avif|gif|jpe?g|png|webp)$/i,
-  RASTER_IMAGE_FORMATS: ['jpeg', 'jpg', 'png', 'webp'],
+  RASTER_IMAGE_FORMATS: ['avif', 'gif', 'jpeg', 'png', 'webp'],
 }));
 vi.mock('$lib/services/utils/media/image/transform');
 
@@ -505,6 +505,38 @@ describe('integrations/media-libraries/default', () => {
       expect(vi.mocked(transformImage)).toHaveBeenCalledWith(jpegFile, {
         format: 'webp',
         quality: 80,
+        width: undefined,
+        height: undefined,
+      });
+
+      expect(result).toBeInstanceOf(File);
+      expect(result.name).toBe('image.webp');
+    });
+
+    it('should not apply the catch-all raster_image transformation to GIFs', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const gifFile = new File(['gif content'], 'image.gif', { type: 'image/gif' });
+      // GIFs are typically animated, and re-encoding would flatten them to a single frame
+      const transformations = /** @type {any} */ ({ raster_image: { format: 'webp' } });
+      const result = await transformFile(gifFile, transformations);
+
+      expect(vi.mocked(transformImage)).not.toHaveBeenCalled();
+      expect(result).toBe(gifFile);
+    });
+
+    it('should transform GIF when explicitly configured', async () => {
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+      const mockBlob = new Blob(['transformed'], { type: 'image/webp' });
+      const gifFile = new File(['gif content'], 'image.gif', { type: 'image/gif' });
+
+      vi.mocked(transformImage).mockResolvedValue(mockBlob);
+
+      const transformations = /** @type {any} */ ({ gif: { format: 'webp' } });
+      const result = await transformFile(gifFile, transformations);
+
+      expect(vi.mocked(transformImage)).toHaveBeenCalledWith(gifFile, {
+        format: 'webp',
+        quality: 85,
         width: undefined,
         height: undefined,
       });
