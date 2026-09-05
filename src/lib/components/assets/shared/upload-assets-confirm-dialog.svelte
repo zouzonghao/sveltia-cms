@@ -46,7 +46,7 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
   const removedFileKeys = new Set();
 
-  const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
+  const { files: originalFiles, folder, originalAssets, accept } = $derived($uploadingAssets);
   const originalAsset = $derived(originalAssets?.[0]);
   const { processing, validFiles, oversizedFiles, invalidFiles, transformedFileMap } =
     $derived($processedAssets);
@@ -223,6 +223,7 @@
         <FilePicker
           bind:this={addFilePicker}
           multiple
+          {accept}
           onSelect={({ files: newFiles }) => {
             addFiles(newFiles);
           }}

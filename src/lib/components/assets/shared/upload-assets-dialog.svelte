@@ -1,6 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, Button, Dialog, FilePicker, Icon, Toast } from '@sveltia/ui';
+  import { Alert, Dialog, FilePicker, Toast } from '@sveltia/ui';
   import mime from 'mime';
   import { untrack } from 'svelte';
 
@@ -13,11 +13,7 @@
     uploadDialogAccept,
   } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
-  import {
-    getPastedImageFiles,
-    markPasteEventHandled,
-    readImageFilesFromClipboard,
-  } from '$lib/services/utils/clipboard';
+  import { getPastedImageFiles, markPasteEventHandled } from '$lib/services/utils/clipboard';
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
@@ -47,6 +43,8 @@
       folder: originalAsset ? originalAsset.folder : $targetAssetFolder,
       files,
       originalAssets,
+      // Remember the constraint so that adding more files to the batch narrows the same way
+      accept,
     };
     $showUploadAssetsDialog = false;
   };
@@ -69,25 +67,6 @@
       onSelect(pastedFiles);
     } else {
       Object.assign(pasteToast, { message: _('no_image_in_clipboard'), show: true });
-    }
-  };
-
-  /**
-   * Handle a click on the paste button, reading the clipboard with the asynchronous API, which
-   * can retrieve screenshots that don’t surface through paste events.
-   */
-  const onPasteButtonClick = async () => {
-    try {
-      onSelect(await readImageFilesFromClipboard());
-    } catch (/** @type {any} */ ex) {
-      Object.assign(pasteToast, {
-        message: _(
-          /** @type {any} */ (ex).message?.includes('No image found')
-            ? 'no_image_in_clipboard'
-            : 'clipboard_access_denied',
-        ),
-        show: true,
-      });
     }
   };
 
@@ -148,14 +127,6 @@
         onSelect(files);
       }}
     />
-    <div role="none" class="paste-row">
-      <Button variant="tertiary" onclick={onPasteButtonClick}>
-        {#snippet startIcon()}
-          <Icon name="content_paste" />
-        {/snippet}
-        {_('paste_image')}
-      </Button>
-    </div>
   </Dialog>
 {:else}
   <FilePicker
@@ -174,9 +145,3 @@
 <Toast bind:show={pasteToast.show}>
   <Alert status="error">{pasteToast.message}</Alert>
 </Toast>
-
-<style>
-  .paste-row {
-    margin-top: 12px;
-  }
-</style>

@@ -66,17 +66,18 @@
     <EditOptionsButton asset={$focusedAsset} />
   {/if}
   <FloatingActionButtonWrapper>
-    {#if env.isSmallScreen && !uploadDisabled}
-      <!-- Image-specific launcher: narrows the picker to `image/*` so mobile platforms offer the
-           gallery instead of the generic file manager -->
-      <UploadAssetsButton
-        accept="image/*"
-        icon="add_photo_alternate"
-        ariaLabelKey="upload_image_assets"
-      />
-    {/if}
-    {#if !env.isSmallScreen || ($listedAssets.length && !uploadDisabled)}
-      <UploadAssetsButton label={env.isSmallScreen ? undefined : _('upload')} />
+    {#if env.isSmallScreen}
+      <!-- Image-only launcher on mobile: narrows the picker to `image/*` so mobile platforms offer
+           the gallery instead of the generic file manager -->
+      {#if $listedAssets.length && !uploadDisabled}
+        <UploadAssetsButton
+          accept="image/*"
+          icon="add_photo_alternate"
+          ariaLabelKey="upload_image_assets"
+        />
+      {/if}
+    {:else}
+      <UploadAssetsButton label={_('upload')} />
     {/if}
   </FloatingActionButtonWrapper>
 </Toolbar>
