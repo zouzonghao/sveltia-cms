@@ -1,24 +1,33 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Dialog, FilePicker } from '@sveltia/ui';
+  import { Alert, Button, Dialog, FilePicker, Icon, Toast } from '@sveltia/ui';
   import mime from 'mime';
   import { untrack } from 'svelte';
 
   import DropZone from '$lib/components/assets/shared/drop-zone.svelte';
   import { uploadingAssets } from '$lib/services/assets';
   import { targetAssetFolder } from '$lib/services/assets/folders';
-  import { showAssetOverlay, showUploadAssetsDialog } from '$lib/services/assets/view';
+  import {
+    showAssetOverlay,
+    showUploadAssetsDialog,
+    uploadDialogAccept,
+  } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
+  import { getPastedImageFiles, readImageFilesFromClipboard } from '$lib/services/utils/clipboard';
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
+  const pasteToast = $state({
+    show: false,
+    message: /** @type {string | undefined} */ (undefined),
+  });
 
   const { originalAssets } = $derived($uploadingAssets);
   // Use the first asset because replacement only supports one asset for now
   const originalAsset = $derived(originalAssets?.[0]);
   const multiple = $derived(!originalAsset);
   const accept = $derived(
-    originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : undefined,
+    originalAsset ? (mime.getType(originalAsset.name) ?? undefined) : $uploadDialogAccept,
   );
 
   /**
@@ -36,6 +45,43 @@
       originalAssets,
     };
     $showUploadAssetsDialog = false;
+  };
+
+  /**
+   * Handle a paste keyboard shortcut while the dialog is open.
+   * @param {ClipboardEvent} event Paste event.
+   */
+  const onPaste = (event) => {
+    if (!env.hasMouse || !$showUploadAssetsDialog) {
+      return;
+    }
+
+    const pastedFiles = getPastedImageFiles(event);
+
+    if (pastedFiles.length) {
+      onSelect(pastedFiles);
+    } else {
+      Object.assign(pasteToast, { message: _('no_image_in_clipboard'), show: true });
+    }
+  };
+
+  /**
+   * Handle a click on the paste button, reading the clipboard with the asynchronous API, which
+   * can retrieve screenshots that don’t surface through paste events.
+   */
+  const onPasteButtonClick = async () => {
+    try {
+      onSelect(await readImageFilesFromClipboard());
+    } catch (/** @type {any} */ ex) {
+      Object.assign(pasteToast, {
+        message: _(
+          /** @type {any} */ (ex).message?.includes('No image found')
+            ? 'no_image_in_clipboard'
+            : 'clipboard_access_denied',
+        ),
+        show: true,
+      });
+    }
   };
 
   $effect(() => {
@@ -63,10 +109,15 @@
         if (!$uploadingAssets.files.length && $uploadingAssets.originalAssets) {
           $uploadingAssets = { folder: undefined, files: [] };
         }
+
+        // Likewise, don’t leave an `accept` override behind for the next ordinary upload
+        $uploadDialogAccept = undefined;
       });
     }
   });
 </script>
+
+<svelte:window onpaste={onPaste} />
 
 {#if env.hasMouse}
   <Dialog
@@ -90,6 +141,14 @@
         onSelect(files);
       }}
     />
+    <div role="none" class="paste-row">
+      <Button variant="tertiary" onclick={onPasteButtonClick}>
+        {#snippet startIcon()}
+          <Icon name="content_paste" />
+        {/snippet}
+        {_('paste_image')}
+      </Button>
+    </div>
   </Dialog>
 {:else}
   <FilePicker
@@ -104,3 +163,13 @@
     }}
   />
 {/if}
+
+<Toast bind:show={pasteToast.show}>
+  <Alert status="error">{pasteToast.message}</Alert>
+</Toast>
+
+<style>
+  .paste-row {
+    margin-top: 12px;
+  }
+</style>

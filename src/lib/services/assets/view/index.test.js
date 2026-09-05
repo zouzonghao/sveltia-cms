@@ -4,7 +4,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getFolderLabelByCollection, showAssetOverlay, showUploadAssetsDialog } from '.';
+import {
+  getFolderLabelByCollection,
+  showAssetOverlay,
+  showUploadAssetsDialog,
+  uploadDialogAccept,
+} from '.';
 
 const { _backendAv, _assetListSettingsAv } = vi.hoisted(() => {
   /**
@@ -174,6 +179,34 @@ describe('assets/view/index', () => {
       showUploadAssetsDialog.subscribe(mockCallback);
 
       expect(mockCallback).toHaveBeenCalled();
+    });
+  });
+
+  describe('uploadDialogAccept', () => {
+    it('should be defined as a store defaulting to undefined', () => {
+      const mockCallback = vi.fn();
+      const unsubscribe = uploadDialogAccept.subscribe(mockCallback);
+
+      expect(typeof uploadDialogAccept.subscribe).toBe('function');
+      expect(mockCallback).toHaveBeenCalledWith(undefined);
+
+      unsubscribe();
+    });
+
+    it('should hold an accept override', () => {
+      uploadDialogAccept.set('image/*');
+
+      /** @type {(string | undefined)[]} */
+      const values = [];
+
+      const unsubscribe = uploadDialogAccept.subscribe((value) => {
+        values.push(value);
+      });
+
+      expect(values).toContain('image/*');
+
+      unsubscribe();
+      uploadDialogAccept.set(undefined);
     });
   });
 

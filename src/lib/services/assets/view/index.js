@@ -30,6 +30,16 @@ export const showAssetOverlay = writable(false);
 export const showUploadAssetsDialog = writable(false);
 
 /**
+ * Optional `accept` override for the next Upload Assets dialog opening. The dialog itself is a
+ * boolean store bound to the dialog component, so an override travels through this separate
+ * store, in the same way a replacement request travels through `uploadingAssets`. It is cleared
+ * when the dialog closes, and an image-specific launcher sets it to `image/*` so that mobile
+ * platforms offer the gallery picker instead of the generic file manager.
+ * @type {Writable<string | undefined>}
+ */
+export const uploadDialogAccept = writable(undefined);
+
+/**
  * @type {Readable<boolean>}
  */
 export const showUploadAssetsConfirmDialog = derived(

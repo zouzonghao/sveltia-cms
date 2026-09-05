@@ -1,11 +1,21 @@
 <script>
   import { _ } from '@sveltia/i18n';
-  import { Alert, ConfirmationDialog, Radio, RadioGroup, Toast } from '@sveltia/ui';
+  import {
+    Alert,
+    Button,
+    ConfirmationDialog,
+    FilePicker,
+    Icon,
+    Radio,
+    RadioGroup,
+    Toast,
+  } from '@sveltia/ui';
   import { getPathInfo } from '@sveltia/utils/file';
 
   import UploadAssetsPreview from '$lib/components/assets/shared/upload-assets-preview.svelte';
   import {
     getAssetsByDirName,
+    getDuplicatedFiles,
     getDuplicateFiles,
     processedAssets,
     uploadingAssets,
@@ -13,15 +23,24 @@
   import { saveAssets } from '$lib/services/assets/data/create';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
+  import { getPastedImageFiles } from '$lib/services/utils/clipboard';
   import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /** @type {File[]} */
   let files = $state([]);
+  /** @type {File[]} */
+  let duplicatedFiles = $state([]);
   let replaceFiles = $state(true);
   // Committing to a remote repository takes a few seconds, and the confirmation dialog is gone by
   // then, so the upload would otherwise happen with nothing on screen to say it’s under way
   let uploading = $state(false);
   let uploadFailed = $state(false);
+  /** @type {FilePicker | undefined} */
+  let addFilePicker = $state();
+  // Files the user removed from the list, keyed by name and size so that a removal survives the
+  // reprocessing triggered by adding more files, which recreates the transformed File objects
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const removedFileKeys = new Set();
 
   const { files: originalFiles, folder, originalAssets } = $derived($uploadingAssets);
   const originalAsset = $derived(originalAssets?.[0]);
@@ -53,18 +72,73 @@
       : [],
   );
 
+  /**
+   * Get a stable key for a file, surviving the reprocessing that recreates File objects.
+   * @param {File} file File.
+   * @returns {string} Key.
+   */
+  const getFileKey = (file) => `${file.name}::${file.size}`;
+
+  /**
+   * Add more files to the pending batch. The `processedAssets` store safely reprocesses the
+   * whole list, and this dialog stays open because it is bound to the file list.
+   * @param {File[]} newFiles Files to add.
+   */
+  const addFiles = (newFiles) => {
+    if (!newFiles.length) {
+      return;
+    }
+
+    $uploadingAssets = {
+      ...$uploadingAssets,
+      files: [...$uploadingAssets.files, ...newFiles],
+    };
+  };
+
   $effect(() => {
-    files = validFiles.filter((file) => !mismatchedFiles.includes(file));
+    files = validFiles.filter(
+      (file) =>
+        !mismatchedFiles.includes(file) &&
+        !duplicatedFiles.includes(file) &&
+        !removedFileKeys.has(getFileKey(file)),
+    );
     replaceFiles = true;
+  });
+
+  // Detect files whose content is identical to an existing asset or to an earlier file in the
+  // same batch, comparing Git object IDs with the `sha` the backends provide
+  $effect(() => {
+    const filesToCheck = validFiles.filter((file) => !mismatchedFiles.includes(file));
+    const assets = assetsInSameFolder;
+    let superseded = false;
+
+    getDuplicatedFiles(filesToCheck, assets).then((result) => {
+      if (!superseded) {
+        duplicatedFiles = result;
+      }
+    });
+
+    return () => {
+      superseded = true;
+    };
   });
 
   $effect(() => {
     if (!$showAssetOverlay) {
       // Close the dialog
       $uploadingAssets = { folder: undefined, files: [] };
+      removedFileKeys.clear();
     }
   });
 </script>
+
+<svelte:window
+  onpaste={(event) => {
+    if ($showUploadAssetsConfirmDialog && !originalAsset && !uploading) {
+      addFiles(getPastedImageFiles(event));
+    }
+  }}
+/>
 
 <ConfirmationDialog
   open={$showUploadAssetsConfirmDialog}
@@ -114,7 +188,34 @@
           })}
         {/if}
       </div>
-      <UploadAssetsPreview bind:files {transformedFileMap} />
+      <UploadAssetsPreview
+        bind:files
+        {transformedFileMap}
+        onRemove={(file) => removedFileKeys.add(getFileKey(file))}
+      />
+      {#if !originalAsset}
+        <div role="none" class="add-more">
+          <Button
+            variant="ghost"
+            disabled={uploading}
+            onclick={() => {
+              addFilePicker?.open();
+            }}
+          >
+            {#snippet startIcon()}
+              <Icon name="add" />
+            {/snippet}
+            {_('add_more_files')}
+          </Button>
+        </div>
+        <FilePicker
+          bind:this={addFilePicker}
+          multiple
+          onSelect={({ files: newFiles }) => {
+            addFiles(newFiles);
+          }}
+        />
+      {/if}
     </div>
   {/if}
   {#if oversizedFiles.length}
@@ -128,6 +229,14 @@
         })}
       </Alert>
       <UploadAssetsPreview files={oversizedFiles} {transformedFileMap} removable={false} />
+    </div>
+  {/if}
+  {#if duplicatedFiles.length}
+    <div role="group" class="section duplicated" aria-label={_('duplicated_files')}>
+      <Alert status="warning">
+        {_('warning_duplicated_files', { values: { count: duplicatedFiles.length } })}
+      </Alert>
+      <UploadAssetsPreview files={duplicatedFiles} {transformedFileMap} removable={false} />
     </div>
   {/if}
   {#if invalidFiles.length}
@@ -190,8 +299,13 @@
 
     &.oversized :global(.files),
     &.invalid :global(.files),
-    &.mismatched :global(.files) {
+    &.mismatched :global(.files),
+    &.duplicated :global(.files) {
       opacity: 0.5;
+    }
+
+    .add-more {
+      align-self: flex-start;
     }
   }
 </style>

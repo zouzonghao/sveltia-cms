@@ -514,6 +514,7 @@ no_entries_found: 未找到条目。
 
 # Upload dialog: title and button label
 upload_assets: 上传新资源
+upload_image_assets: 上传图片
 
 # Edit options menu: button and item labels
 edit_options: 编辑选项
@@ -703,6 +704,15 @@ warning_oversized_files: |
   .match $count
     * {{ 这些文件无法上传，已超过大小限制 {$size}。请压缩文件或选择其他文件。 }}
 
+# File content validation
+# Warning section for files with content identical to an existing asset
+duplicated_files: 内容重复的文件
+# {$count} is the number of duplicated files
+warning_duplicated_files: |
+  .input {$count :integer}
+  .match $count
+    * {{ 这些文件不会上传，因为相同内容的文件已存在于该文件夹。 }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -718,6 +728,9 @@ file_name_conflict_confirmation_with_name: |
 file_name_conflict_resolution: 文件名冲突解决
 # Option to keep both files (rename the new one)
 keep_both: 两者都保留
+
+# Upload confirmation dialog: button to add more files to the batch
+add_more_files: 添加更多文件
 
 # Upload progress and error messages
 uploading_files_progress: 上传中……

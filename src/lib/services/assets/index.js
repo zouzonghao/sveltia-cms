@@ -20,7 +20,7 @@ import { isCollectionIndexFile } from '$lib/services/contents/collection/entries
 import { getCollectionFilesByEntry } from '$lib/services/contents/collection/files';
 import { getAssociatedCollections } from '$lib/services/contents/entry';
 import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-import { createPath, decodeFilePath, resolvePath } from '$lib/services/utils/file';
+import { createPath, decodeFilePath, getGitHash, resolvePath } from '$lib/services/utils/file';
 
 /**
  * @import { Readable, Writable } from 'svelte/store';
@@ -607,4 +607,39 @@ export const getDuplicateFiles = (files, assets) => {
   const existingNames = new Set(assets.map(({ name }) => name.normalize().toLowerCase()));
 
   return files.filter((file) => existingNames.has(file.name.normalize().toLowerCase()));
+};
+
+/**
+ * Get a list of files whose content is identical to an existing asset or to an earlier file in
+ * the same batch, so uploading them would only create a duplicate. The Git object ID is
+ * calculated for the (possibly transformed) files and compared with the `sha` of the assets,
+ * which Git backends provide in the same format. Assets without `sha` (over 10 MB files can’t
+ * have one fetched from a commit) are skipped.
+ * @param {File[]} files The list of files to check for duplicates.
+ * @param {Asset[]} assets The list of existing assets to compare against.
+ * @returns {Promise<File[]>} An array of files with duplicated content.
+ */
+export const getDuplicatedFiles = async (files, assets) => {
+  if (!files.length) {
+    return [];
+  }
+
+  const existingShas = new Set(assets.map(({ sha }) => sha).filter(Boolean));
+  /** @type {File[]} */
+  const duplicatedFiles = [];
+
+  await Promise.all(
+    files.map(async (file) => {
+      const sha = await getGitHash(file);
+
+      if (existingShas.has(sha)) {
+        duplicatedFiles.push(file);
+      } else {
+        // Later files in the batch can still reuse this hash for in-batch deduplication
+        existingShas.add(sha);
+      }
+    }),
+  );
+
+  return duplicatedFiles;
 };

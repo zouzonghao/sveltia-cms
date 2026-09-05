@@ -537,6 +537,8 @@ no_entries_found: No entries found.
 
 # Upload dialog: title and button label
 upload_assets: Upload New Assets
+# Upload button dedicated to images (opens the platform image picker on mobile)
+upload_image_assets: Upload Images
 
 # Edit options menu: button and item labels
 edit_options: Edit Options
@@ -773,6 +775,16 @@ warning_mismatched_files: |
     one {{ This file cannot replace “{$name}” because it’s in a different format. Please convert the file to the same format and try again. }}
     *   {{ These files cannot replace “{$name}” because they’re in a different format. Please convert the files to the same format and try again. }}
 
+# File content validation
+# Warning section for files with content identical to an existing asset
+duplicated_files: Duplicated Files
+# {$count} is the number of duplicated files
+warning_duplicated_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ This file is not uploaded because identical content is already in this folder. }}
+    *   {{ These {$count} files are not uploaded because identical content is already in this folder. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
@@ -790,6 +802,9 @@ file_name_conflict_confirmation_with_name: |
 file_name_conflict_resolution: File Name Conflict Resolution
 # Option to keep both files (rename the new one)
 keep_both: Keep Both
+
+# Upload confirmation dialog: button to add more files to the batch
+add_more_files: Add More Files
 
 # Upload progress and error messages
 uploading_files_progress: Uploading…

@@ -17,6 +17,8 @@
    * @property {boolean} [removable] Whether to show the Remove button on each row.
    * @property {boolean} [showThumbnail] Whether to show a thumbnail of each image file. Disable
    * this for files the browser cannot decode, which would only ever render as a broken image.
+   * @property {(file: File) => void} [onRemove] Callback invoked with the removed file, so the
+   * parent can remember the removal when the list is later rebuilt from the store.
    */
 
   /** @type {Props} */
@@ -26,6 +28,7 @@
     transformedFileMap = undefined,
     removable = true,
     showThumbnail = true,
+    onRemove = undefined,
     /* eslint-enable prefer-const */
   } = $props();
 
@@ -123,6 +126,7 @@
           onclick={(event) => {
             event.stopPropagation();
             files.splice(index, 1);
+            onRemove?.(file);
           }}
         >
           <Icon name="close" />

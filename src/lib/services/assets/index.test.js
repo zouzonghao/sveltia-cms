@@ -18,6 +18,7 @@ import {
   getAssetKey,
   getAssetsByDirName,
   getAssetsByFolder,
+  getDuplicatedFiles,
   getDuplicateFiles,
   isAssetInFolder,
   isRelativePath,
@@ -4655,6 +4656,66 @@ describe('assets/index', () => {
       const result = getDuplicateFiles([file], [makeAsset(`caf${composed}.jpg`)]);
 
       expect(result).toEqual([file]);
+    });
+  });
+
+  describe('getDuplicatedFiles', () => {
+    /**
+     * @param {string} name
+     * @returns {File}
+     */
+    const makeFile = (name) => new File([], name);
+    /**
+     * @param {string} name
+     * @param {string | undefined} sha
+     * @returns {import('$lib/types/private').Asset}
+     */
+    const makeAsset = (name, sha) => /** @type {any} */ ({ name, sha });
+
+    beforeEach(async () => {
+      const { getGitHash } = await import('$lib/services/utils/file');
+
+      // Derive a deterministic pseudo-hash from the file name
+      vi.mocked(getGitHash).mockImplementation(
+        /** @type {any} */ (async (/** @type {File} */ input) => `${input.name}-hash`),
+      );
+    });
+
+    it('should return empty array when files list is empty', async () => {
+      expect(await getDuplicatedFiles([], [makeAsset('photo.jpg', 'photo.jpg-hash')])).toEqual([]);
+    });
+
+    it('should return files whose content hash matches an existing asset', async () => {
+      const file = makeFile('renamed.jpg');
+      const result = await getDuplicatedFiles([file], [makeAsset('photo.jpg', 'renamed.jpg-hash')]);
+
+      expect(result).toEqual([file]);
+    });
+
+    it('should return empty array when no content hash matches', async () => {
+      const result = await getDuplicatedFiles(
+        [makeFile('new1.jpg'), makeFile('new2.png')],
+        [makeAsset('photo.jpg', 'photo.jpg-hash')],
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('should skip assets without a sha', async () => {
+      const result = await getDuplicatedFiles(
+        [makeFile('huge.jpg')],
+        [makeAsset('huge.jpg', undefined)],
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('should detect in-batch duplicates, keeping the first file', async () => {
+      const first = makeFile('same.jpg');
+      const second = makeFile('same.jpg');
+      const result = await getDuplicatedFiles([first, second], []);
+
+      expect(result).toEqual([second]);
     });
   });
 });
