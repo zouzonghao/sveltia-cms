@@ -1,6 +1,33 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getPastedImageFiles, readImageFilesFromClipboard } from './clipboard';
+import {
+  getPastedImageFiles,
+  isPasteEventHandled,
+  markPasteEventHandled,
+  readImageFilesFromClipboard,
+} from './clipboard';
+
+describe('paste event guard', () => {
+  it('should mark an event as handled and report it back', () => {
+    const event = /** @type {ClipboardEvent} */ (/** @type {any} */ ({}));
+
+    expect(isPasteEventHandled(event)).toBe(false);
+
+    markPasteEventHandled(event);
+
+    expect(isPasteEventHandled(event)).toBe(true);
+  });
+
+  it('should track events independently', () => {
+    const event1 = /** @type {ClipboardEvent} */ (/** @type {any} */ ({}));
+    const event2 = /** @type {ClipboardEvent} */ (/** @type {any} */ ({}));
+
+    markPasteEventHandled(event1);
+
+    expect(isPasteEventHandled(event1)).toBe(true);
+    expect(isPasteEventHandled(event2)).toBe(false);
+  });
+});
 
 describe('utils/clipboard', () => {
   describe('getPastedImageFiles', () => {

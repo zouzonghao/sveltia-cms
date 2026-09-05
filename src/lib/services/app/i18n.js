@@ -7,11 +7,13 @@ import {
 } from '@sveltia/i18n';
 import { strings as componentStrings } from '@sveltia/ui';
 import defaultComponentStrings from '@sveltia/ui/locales/en-US.yaml';
+import zhCNComponentStrings from '@sveltia/ui/locales/zh-CN.yaml';
 import { getPathInfo } from '@sveltia/utils/file';
 import { LocalStorage } from '@sveltia/utils/storage';
 import { toStore, writable } from 'svelte/store';
 
 import defaultLocaleStrings from '$lib/locales/en-US.yaml';
+import zhCNLocaleStrings from '$lib/locales/zh-CN.yaml';
 import { UNPKG_BASE_URL, version } from '$lib/services/app';
 import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.svelte';
 
@@ -20,10 +22,19 @@ import { navigatorLocale, PREFS_STORAGE_KEY } from '$lib/services/user/prefs.sve
  */
 
 /**
- * Default application locale. This is the only locale bundled with the app; the strings for the
+ * Default application locale. This locale is always bundled with the app; the strings for most
  * other locales are loaded from the CDN on demand.
  */
 export const DEFAULT_APP_LOCALE = 'en-US';
+
+/**
+ * Locales whose strings are bundled with the app in production. The fork adds translation keys
+ * that don’t exist in the upstream locale files fetched from the CDN, so Chinese — the primary
+ * language of this fork’s users — is bundled as well instead of being fetched and falling back
+ * to English for the fork-specific keys.
+ * @type {string[]}
+ */
+const BUNDLED_APP_LOCALES = [DEFAULT_APP_LOCALE, 'zh-CN'];
 
 /**
  * List of all the available application locales, injected by Vite at build time based on the file
@@ -252,7 +263,7 @@ const getStoredLocale = () => {
 /**
  * Load strings and initialize the locales. The Sveltia CMS strings are merged with the Sveltia UI
  * strings, the latter being prefixed with `_sui` to avoid collision. Only the
- * {@link DEFAULT_APP_LOCALE} strings are bundled with the app to keep the bundle size small. The
+ * {@link BUNDLED_APP_LOCALES} strings are bundled with the app to keep the bundle size small. The
  * other locales are registered without strings, and those strings are fetched from the CDN once the
  * locale is first used. During development, all the locales are bundled instead, so that new
  * translations can be tested without publishing them.
@@ -289,7 +300,12 @@ export const initAppLocale = () => {
       _sui: defaultComponentStrings,
     });
 
-    APP_LOCALES.filter((locale) => locale !== DEFAULT_APP_LOCALE).forEach((locale) => {
+    addMessages('zh-CN', {
+      ...zhCNLocaleStrings,
+      _sui: zhCNComponentStrings,
+    });
+
+    APP_LOCALES.filter((locale) => !BUNDLED_APP_LOCALES.includes(locale)).forEach((locale) => {
       // Register the locale without strings so it’s listed in the language switcher; the strings
       // are loaded lazily when the locale is activated with `waitLocale()` or `locale.set()`
       register(locale, () => loadLocaleStrings(locale));

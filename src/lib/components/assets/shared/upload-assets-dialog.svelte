@@ -13,7 +13,11 @@
     uploadDialogAccept,
   } from '$lib/services/assets/view';
   import { env } from '$lib/services/user/env.svelte';
-  import { getPastedImageFiles, readImageFilesFromClipboard } from '$lib/services/utils/clipboard';
+  import {
+    getPastedImageFiles,
+    markPasteEventHandled,
+    readImageFilesFromClipboard,
+  } from '$lib/services/utils/clipboard';
 
   /** @type {FilePicker | undefined} */
   let filePicker = $state();
@@ -55,6 +59,9 @@
     if (!env.hasMouse || !$showUploadAssetsDialog) {
       return;
     }
+
+    // The confirmation dialog’s own paste listener must not consume the same event again
+    markPasteEventHandled(event);
 
     const pastedFiles = getPastedImageFiles(event);
 

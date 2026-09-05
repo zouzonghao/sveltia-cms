@@ -4,8 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Simplified locale data used by the locale module mocks
 const mockEnData = { hello: 'Hello', world: 'World' };
 const mockJaData = { hello: 'こんにちは', world: '世界' };
+const mockZhCNData = { hello: '你好', world: '世界' };
 // Sveltia UI strings for the default locale, statically imported from the package in production
 const mockDefaultComponentStrings = { button: 'Button (bundled)' };
+// Sveltia UI strings for the bundled Chinese locale
+const mockZhCNComponentStrings = { button: '按钮（捆绑）' };
 
 /** @type {Record<string, Record<string, string> | undefined>} */
 const mockComponentStrings = {
@@ -26,6 +29,7 @@ vi.mock('$lib/locales/en-CA.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-GB.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/en-US.yaml', () => ({ default: mockEnData }));
 vi.mock('$lib/locales/ja.yaml', () => ({ default: mockJaData }));
+vi.mock('$lib/locales/zh-CN.yaml', () => ({ default: mockZhCNData }));
 
 vi.mock('@sveltia/i18n', () => ({
   addMessages: mockAddMessages,
@@ -45,6 +49,7 @@ vi.mock('@sveltia/ui', () => ({
 }));
 
 vi.mock('@sveltia/ui/locales/en-US.yaml', () => ({ default: mockDefaultComponentStrings }));
+vi.mock('@sveltia/ui/locales/zh-CN.yaml', () => ({ default: mockZhCNComponentStrings }));
 
 vi.mock('@sveltia/utils/file', () => ({
   getPathInfo: mockGetPathInfo,
@@ -353,12 +358,12 @@ describe('i18n', () => {
       vi.unstubAllGlobals();
     });
 
-    it('should bundle the default locale only and register loaders for the others', async () => {
+    it('should bundle the default and Chinese locales and register loaders for the others', async () => {
       const { APP_LOCALES, initAppLocale } = await import('./i18n.js');
 
       initAppLocale();
 
-      expect(mockAddMessages).toHaveBeenCalledTimes(1);
+      expect(mockAddMessages).toHaveBeenCalledTimes(2);
       // The component strings come from the `@sveltia/ui` subpath import, not from `strings`, so
       // that the other locales are not bundled
       expect(mockAddMessages).toHaveBeenCalledWith('en-US', {
@@ -366,9 +371,16 @@ describe('i18n', () => {
         world: 'World',
         _sui: mockDefaultComponentStrings,
       });
+      // Chinese is bundled as well because the fork adds keys that the upstream locale files
+      // fetched from the CDN don’t have
+      expect(mockAddMessages).toHaveBeenCalledWith('zh-CN', {
+        hello: '你好',
+        world: '世界',
+        _sui: mockZhCNComponentStrings,
+      });
 
       expect(mockRegister.mock.calls.map(([locale]) => locale)).toEqual(
-        APP_LOCALES.filter((locale) => locale !== 'en-US'),
+        APP_LOCALES.filter((locale) => locale !== 'en-US' && locale !== 'zh-CN'),
       );
 
       expect(mockInit).toHaveBeenCalledWith({

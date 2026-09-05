@@ -23,7 +23,11 @@
   import { saveAssets } from '$lib/services/assets/data/create';
   import { showAssetOverlay, showUploadAssetsConfirmDialog } from '$lib/services/assets/view';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import { getPastedImageFiles } from '$lib/services/utils/clipboard';
+  import {
+    getPastedImageFiles,
+    isPasteEventHandled,
+    markPasteEventHandled,
+  } from '$lib/services/utils/clipboard';
   import { formatSize, isEquivalentFileExtension } from '$lib/services/utils/file';
 
   /** @type {File[]} */
@@ -134,7 +138,15 @@
 
 <svelte:window
   onpaste={(event) => {
-    if ($showUploadAssetsConfirmDialog && !originalAsset && !uploading) {
+    if (
+      $showUploadAssetsConfirmDialog &&
+      !originalAsset &&
+      !uploading &&
+      // The Upload Assets dialog consumes paste events itself and opens this dialog in the same
+      // event dispatch, so skip an event that has already been handled there
+      !isPasteEventHandled(event)
+    ) {
+      markPasteEventHandled(event);
       addFiles(getPastedImageFiles(event));
     }
   }}
