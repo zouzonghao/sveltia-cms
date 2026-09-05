@@ -13,6 +13,12 @@ vi.mock('$lib/services/utils/media/image', () => ({
   RASTER_IMAGE_FORMATS: ['avif', 'gif', 'jpeg', 'png', 'webp'],
 }));
 vi.mock('$lib/services/utils/media/image/transform');
+vi.mock('$lib/services/user/prefs.svelte', () => {
+  // Plain object stand-in for the reactive preferences; tests mutate `imageQuality`
+  const prefs = { imageQuality: undefined };
+
+  return { AUTO_PREF_VALUE: 'auto', PREFS_STORAGE_KEY: 'sveltia-cms.prefs', prefs };
+});
 
 describe('integrations/media-libraries/default', () => {
   beforeEach(async () => {
@@ -87,6 +93,49 @@ describe('integrations/media-libraries/default', () => {
           },
         },
       });
+    });
+
+    it('should apply the image quality preference to raster image transformations', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+
+      getMock.mockReturnValue({
+        config: {
+          transformations: {
+            raster_image: { format: 'avif', quality: 60, width: 2048 },
+            svg: { optimize: true },
+          },
+        },
+      });
+
+      prefs.imageQuality = 50;
+
+      try {
+        const result = getDefaultMediaLibraryOptions();
+
+        // Only the raster image blocks are overridden; the SVG block is kept as is
+        expect(result.config.transformations).toEqual({
+          raster_image: { format: 'avif', quality: 50, width: 2048 },
+          svg: { optimize: true },
+        });
+      } finally {
+        prefs.imageQuality = undefined;
+      }
+    });
+
+    it('should keep the configured quality without an image quality preference', async () => {
+      const { getMediaLibraryOptions } = await import('$lib/services/integrations/media-libraries');
+      const { prefs } = await import('$lib/services/user/prefs.svelte');
+      const getMock = vi.mocked(getMediaLibraryOptions);
+      const transformations = { jpeg: { format: 'webp', quality: 80 } };
+
+      getMock.mockReturnValue({ config: { transformations } });
+      prefs.imageQuality = undefined;
+
+      const result = getDefaultMediaLibraryOptions();
+
+      expect(result.config.transformations).toBe(transformations);
     });
 
     it('should return legacy field-level media library options', async () => {

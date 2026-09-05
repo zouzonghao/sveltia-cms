@@ -1,5 +1,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
+  import { SelectButton, SelectButtonGroup } from '@sveltia/ui';
 
   import ApiKeyInput from '$lib/components/settings/controls/api-key-input.svelte';
   import { allCloudStorageServices } from '$lib/services/integrations/media-libraries/cloud';
@@ -7,6 +8,7 @@
     allStockAssetProviders,
     getStockAssetMediaLibraryOptions,
   } from '$lib/services/integrations/media-libraries/stock';
+  import { AUTO_PREF_VALUE, prefs } from '$lib/services/user/prefs.svelte';
   import { makeLink } from '$lib/services/utils/string';
 
   /**
@@ -26,6 +28,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  /** Upload quality tiers; `AUTO_PREF_VALUE` follows the site configuration. */
+  const qualityTiers = [AUTO_PREF_VALUE, 70, 60, 50];
+
   const enabledStockAssetProviderEntries = $derived.by(() => {
     const { providers = [] } = getStockAssetMediaLibraryOptions();
 
@@ -41,6 +46,37 @@
   );
 </script>
 
+<section>
+  <h3>{_('prefs.media.image_compression.title')}</h3>
+  <p>{_('prefs.media.image_compression.description')}</p>
+  <div role="none">
+    <SelectButtonGroup
+      aria-label={_('prefs.media.image_compression.title')}
+      onChange={(event) => {
+        const { value } = event.detail;
+
+        prefs.imageQuality = value === AUTO_PREF_VALUE ? undefined : value;
+      }}
+    >
+      {#each qualityTiers as value (value)}
+        <SelectButton
+          variant="tertiary"
+          label={
+            value === AUTO_PREF_VALUE
+              ? _('automatic')
+              : _(`prefs.media.image_compression.quality_${value}`)
+          }
+          {value}
+          selected={
+            value === AUTO_PREF_VALUE
+              ? prefs.imageQuality === undefined
+              : prefs.imageQuality === value
+          }
+        />
+      {/each}
+    </SelectButtonGroup>
+  </div>
+</section>
 <section>
   <h3>{_('prefs.media.cloud_storage.api_keys.title')}</h3>
   <p>

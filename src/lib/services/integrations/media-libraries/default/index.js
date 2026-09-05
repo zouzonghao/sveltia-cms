@@ -1,6 +1,7 @@
 import { isObject } from '@sveltia/utils/object';
 
 import { getMediaLibraryOptions } from '$lib/services/integrations/media-libraries';
+import { prefs } from '$lib/services/user/prefs.svelte';
 import {
   RASTER_IMAGE_EXTENSION_REGEX,
   RASTER_IMAGE_FORMATS,
@@ -15,6 +16,30 @@ import { optimizeSVG, transformImage } from '$lib/services/utils/media/image/tra
  * RasterImageTransformationOptions,
  * } from '$lib/types/public';
  */
+
+/**
+ * Apply the user’s image quality preference, if set, to the raster image transformation options
+ * from the configuration, overriding their `quality` values. The blocks are copied so the parsed
+ * configuration object is never mutated.
+ * @param {FileTransformations} transformations File transformation options.
+ * @returns {FileTransformations} Options with the quality override applied.
+ */
+const applyQualityPreference = (transformations) => {
+  const { imageQuality } = prefs;
+
+  if (typeof imageQuality !== 'number') {
+    return transformations;
+  }
+
+  return Object.fromEntries(
+    Object.entries(transformations).map(([key, value]) => [
+      key,
+      key === 'raster_image' || RASTER_IMAGE_FORMATS.includes(/** @type {any} */ (key))
+        ? { ...value, quality: imageQuality }
+        : value,
+    ]),
+  );
+};
 
 /**
  * Get normalized default media library options.
@@ -39,7 +64,8 @@ export const getDefaultMediaLibraryOptions = ({ fieldConfig } = {}) => {
       max_file_size: typeof maxSize === 'number' && Number.isInteger(maxSize) ? maxSize : Infinity,
       multiple: typeof multiple === 'boolean' ? multiple : false,
       slugify_filename: typeof slugify === 'boolean' ? slugify : false,
-      transformations: isObject(transformations) ? transformations : undefined,
+      transformations:
+        isObject(transformations) ? applyQualityPreference(transformations) : undefined,
     },
   };
 };

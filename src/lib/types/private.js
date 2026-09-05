@@ -94,6 +94,8 @@
  * @property {string} [deployHookAuthHeader] Webhook `Authorization` request header value, including
  * the scheme and token, e.g. `Bearer <token>`.
  * @property {string} [defaultTranslationService] Default translation service ID, e.g. `google`.
+ * @property {number} [imageQuality] Quality override (0-100) for image transformations on upload.
+ * When `undefined`, the `quality` values from the site configuration are used as is.
  */
 
 /**
@@ -1020,6 +1022,8 @@
  * file that’s named differently.
  * @property {boolean} [replaceDuplicates] Whether a file that has the same name as an existing
  * asset in the target folder overwrites it. Otherwise the file is saved under a unique name.
+ * @property {string} [accept] `accept` constraint the files were picked with, e.g. `image/*` for
+ * an image-only launcher. It is reapplied when more files are added to the batch.
  */
 
 /**

@@ -558,7 +558,7 @@ tap_to_browse: 轻触浏览……
 drop_files_or_click_to_browse: |
   .input {$count :integer}
   .match $count
-    * {{ 将文件拖放到此处或点击浏览…… }}
+    * {{ 将文件拖放到此处、按 Ctrl+V 粘贴，或点击浏览…… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
@@ -1546,6 +1546,12 @@ prefs:
   # Media panel
   media:
     title: 媒体
+    image_compression:
+      title: 图片压缩
+      description: 上传图片时使用的压缩质量，「自动」跟随站点配置。
+      quality_70: 高质量（70）
+      quality_60: 均衡（60）
+      quality_50: 高压缩（50）
     stock_photos:
       api_keys:
         title: 图库照片服务 API 密钥

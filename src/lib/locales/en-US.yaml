@@ -592,8 +592,8 @@ tap_to_browse: Tap to browse…
 drop_files_or_click_to_browse: |
   .input {$count :integer}
   .match $count
-    one {{ Drop a file here or click to browse… }}
-    *   {{ Drop files here or click to browse… }}
+    one {{ Drop a file here, paste it with the keyboard shortcut, or click to browse… }}
+    *   {{ Drop files here, paste them with the keyboard shortcut, or click to browse… }}
 # Partial drop zone text (ends with inline button)
 # {$count} is the number of files expected by the current picker mode
 # After the “or” text, the inline buttons are rendered with the localized strings
@@ -1910,6 +1910,12 @@ prefs:
   # Media panel
   media:
     title: Media
+    image_compression:
+      title: Image Compression
+      description: Quality applied when uploading images. “Automatic” follows the site configuration.
+      quality_70: High (70)
+      quality_60: Balanced (60)
+      quality_50: High Compression (50)
     stock_photos:
       api_keys:
         title: Stock Photo Service API Keys
