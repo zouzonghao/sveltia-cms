@@ -30,6 +30,8 @@ Patch files (keep this list minimal for easy rebases):
 - `src/lib/components/assets/toolbar/upload-assets-button.svelte` (accept/icon props)
 - `src/lib/components/assets/list/primary-toolbar.svelte` (second FAB)
 - `src/lib/components/settings/panels/media-panel.svelte` (image quality tiers)
+- `src/lib/components/contents/details/fields/rich-text/rich-text-editor.svelte` (taller editor
+  with bottom breathing room)
 - `package.json` (`@jsquash/avif`, `@jsquash/jpeg` version pins)
 - `src/lib/locales/en-US.yaml` + `src/lib/locales/zh-CN.yaml` (new keys)
 - corresponding `*.test.js` files
@@ -45,7 +47,7 @@ git tag vX.Y.Z-cactus.N
 git push origin cactus --tags
 ```
 
-The build artifact is served via jsDelivr, e.g. `https://cdn.jsdelivr.net/gh/zouzonghao/sveltia-cms@v0.205.4-cactus.5/package/dist/sveltia-cms.js`. Always pin the tag, never the branch: jsDelivr caches branches for ~12 hours and tags are immutable.
+The build artifact is served via jsDelivr, e.g. `https://cdn.jsdelivr.net/gh/zouzonghao/sveltia-cms@v0.205.4-cactus.7/package/dist/sveltia-cms.js`. Always pin the tag, never the branch: jsDelivr caches branches for ~12 hours and tags are immutable.
 
 ## Syncing with upstream
 

@@ -477,6 +477,16 @@
     --sui-paragraph-margin: 20px;
     display: contents;
 
+    /* The Cactus fork makes the body editor start tall and adds bottom breathing room, so the
+       last lines can be scrolled above the bottom edge — and above the on-screen keyboard on
+       mobile. The direct-child selector keeps nested editor components (e.g. the image insertion
+       form) untouched */
+    & > :global(.sui.text-editor) :global(.lexical-root),
+      & > :global(.sui.text-editor) :global(textarea) {
+      min-height: 40vh;
+      padding-bottom: 20vh;
+    }
+
     &.minimal {
       :global {
         :is([role='textbox'], textarea) {
