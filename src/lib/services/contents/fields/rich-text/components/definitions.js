@@ -22,10 +22,11 @@ export const IMAGE_COMPONENT = {
   /* eslint-disable jsdoc/require-jsdoc */
   id: 'image',
   label: 'Image',
-  // The Cactus fork keeps only the source field in the insertion form, so inserting an image is
-  // a single picker tap instead of a form. `toBlock`/`toPreview` still honor `alt` and `title`
-  // when they exist, e.g. in content authored elsewhere
-  fields: [{ name: 'src', label: 'Source', widget: 'image' }],
+  fields: [
+    { name: 'src', label: 'Source', widget: 'image' },
+    { name: 'alt', label: 'Alt Text', required: false },
+    { name: 'title', label: 'Title', required: false },
+  ],
   pattern: IMAGE_REGEX,
   toBlock: (props) => {
     const { src = '', alt = '', title = '' } = props;
@@ -87,7 +88,11 @@ export const getBuiltInComponentDefs = () => {
   const commonImageProps = {
     icon: 'image',
     label: _('editor_components.image'),
-    fields: [{ name: 'src', label: _('editor_components.src'), widget: 'image' }],
+    fields: [
+      { name: 'src', label: _('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: _('editor_components.alt'), required: false },
+      { name: 'title', label: _('editor_components.title'), required: false },
+    ],
   };
 
   return [
@@ -126,7 +131,11 @@ export const getComponentDef = (name) => {
   const commonImageProps = {
     icon: 'image',
     label: _('editor_components.image'),
-    fields: [{ name: 'src', label: _('editor_components.src'), widget: 'image' }],
+    fields: [
+      { name: 'src', label: _('editor_components.src'), widget: 'image' },
+      { name: 'alt', label: _('editor_components.alt'), required: false },
+      { name: 'title', label: _('editor_components.title'), required: false },
+    ],
     trigger: /** @type {'button'} */ ('button'),
   };
 
