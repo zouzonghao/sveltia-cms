@@ -43,6 +43,6 @@
   }}
 >
   {#snippet startIcon()}
-    <Icon {icon} />
+    <Icon name={icon} />
   {/snippet}
 </Button>
