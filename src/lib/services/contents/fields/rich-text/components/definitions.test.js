@@ -77,25 +77,18 @@ describe('definitions', () => {
       expect(IMAGE_COMPONENT.id).toBe('image');
       expect(IMAGE_COMPONENT.label).toBe('Image');
       expect(Array.isArray(IMAGE_COMPONENT.fields)).toBe(true);
-      expect(IMAGE_COMPONENT.fields).toHaveLength(3);
+      // The Cactus fork only shows the source field in the insertion form
+      expect(IMAGE_COMPONENT.fields).toHaveLength(1);
       expect(typeof IMAGE_COMPONENT.toBlock).toBe('function');
       expect(typeof IMAGE_COMPONENT.toPreview).toBe('function');
     });
 
     it('should have correct field definitions', () => {
-      const [srcField, altField, titleField] = IMAGE_COMPONENT.fields;
+      const [srcField] = IMAGE_COMPONENT.fields;
 
       expect(srcField.name).toBe('src');
       expect(srcField.label).toBe('Source');
       expect(srcField.widget).toBe('image');
-
-      expect(altField.name).toBe('alt');
-      expect(altField.label).toBe('Alt Text');
-      expect(altField.required).toBe(false);
-
-      expect(titleField.name).toBe('title');
-      expect(titleField.label).toBe('Title');
-      expect(titleField.required).toBe(false);
     });
 
     describe('toBlock method', () => {
@@ -163,7 +156,8 @@ describe('definitions', () => {
       expect(LINKED_IMAGE_COMPONENT.id).toBe('linked-image');
       expect(LINKED_IMAGE_COMPONENT.label).toBe('Image');
       expect(Array.isArray(LINKED_IMAGE_COMPONENT.fields)).toBe(true);
-      expect(LINKED_IMAGE_COMPONENT.fields).toHaveLength(4);
+      // The image source plus the link field
+      expect(LINKED_IMAGE_COMPONENT.fields).toHaveLength(2);
       expect(typeof LINKED_IMAGE_COMPONENT.toBlock).toBe('function');
       expect(typeof LINKED_IMAGE_COMPONENT.toPreview).toBe('function');
       expect(typeof LINKED_IMAGE_COMPONENT.fromBlock).toBe('function');
@@ -480,11 +474,9 @@ describe('definitions', () => {
         expect(srcField).toBeDefined();
         expect(srcField?.widget).toBe('image');
 
-        expect(altField).toBeDefined();
-        expect(altField?.required).toBe(false);
-
-        expect(titleField).toBeDefined();
-        expect(titleField?.required).toBe(false);
+        // The Cactus fork only shows the source field in the insertion form
+        expect(altField).toBeUndefined();
+        expect(titleField).toBeUndefined();
       }
     });
 
@@ -570,7 +562,8 @@ describe('definitions', () => {
       expect(result).toBeDefined();
       expect(result?.id).toBe('linked-image');
       expect(result?.fields).toBeInstanceOf(Array);
-      expect(result?.fields.length).toBeGreaterThan(3); // Has link field
+      // The image source plus the link field
+      expect(result?.fields).toHaveLength(2);
     });
 
     it('should return custom registered component', () => {
