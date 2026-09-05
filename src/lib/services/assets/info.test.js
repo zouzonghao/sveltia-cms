@@ -530,6 +530,28 @@ describe('assets/info', () => {
       expect(result).toBe('blob:mock-url');
     });
 
+    it('should fall back to the original blob when the transformation fails', async () => {
+      mockIndexedDB.get.mockResolvedValue(undefined);
+
+      const file = new File(['original content'], 'test.jpg', { type: 'image/jpeg' });
+
+      const assetWithFile = {
+        ...mockAsset,
+        file,
+      };
+
+      const { transformImage } = await import('$lib/services/utils/media/image/transform');
+
+      // E.g. the jSquash WASM encoder unavailable for the WebP format on Safari
+      vi.mocked(transformImage).mockRejectedValue(new Error('Encoding failed: webp'));
+
+      const result = await getAssetThumbnailURL(assetWithFile);
+
+      expect(result).toBe('blob:mock-url');
+      // The original file is cached as the thumbnail rather than failing the resolution
+      expect(mockIndexedDB.set).toHaveBeenCalledWith('abc123', file);
+    });
+
     it('should return undefined in cache-only mode if no cached thumbnail', async () => {
       mockIndexedDB.get.mockResolvedValue(undefined);
 

@@ -54,37 +54,3 @@ export const getPastedImageFiles = (event) => {
       }),
   );
 };
-
-/**
- * Read image files from the system clipboard with the asynchronous Clipboard API. This can
- * retrieve screenshots that don’t surface through paste events.
- * @returns {Promise<File[]>} Image files.
- * @throws {Error} If the clipboard cannot be read or holds no image.
- */
-export const readImageFilesFromClipboard = async () => {
-  const clipboardItems = await navigator.clipboard.read();
-  /** @type {string | undefined} */
-  let imageType;
-
-  const imageItem = clipboardItems.find((item) =>
-    item.types.some((type) => {
-      const isImage = type.startsWith('image/');
-
-      if (isImage) {
-        imageType = type;
-      }
-
-      return isImage;
-    }),
-  );
-
-  if (!imageItem || !imageType) {
-    throw new Error('No image found in clipboard');
-  }
-
-  const blob = await imageItem.getType(imageType);
-
-  return [
-    new File([blob], `pasted-image-${Date.now()}.${getExtension(blob)}`, { type: imageType }),
-  ];
-};

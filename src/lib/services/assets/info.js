@@ -223,7 +223,15 @@ const resolveThumbnailBlob = async (asset, isPDF) => {
     const blob = await getAssetBlob(asset);
     const transform = isPDF ? renderPDF : transformImage;
 
-    thumbnailBlob = await transform(blob, THUMBNAIL_TRANSFORM_OPTIONS);
+    try {
+      thumbnailBlob = await transform(blob, THUMBNAIL_TRANSFORM_OPTIONS);
+    } catch {
+      // A thumbnail is a decoration, not data being uploaded, so a failed transformation — e.g.
+      // the jSquash WASM encoder unavailable for the WebP format on Safari — falls back to the
+      // original blob instead of failing the whole resolution. Uploads stay strict: there a
+      // silent fallback could produce a file whose extension and content don’t match
+      thumbnailBlob = blob;
+    }
 
     await thumbnailDB?.set(asset.sha, thumbnailBlob);
   }

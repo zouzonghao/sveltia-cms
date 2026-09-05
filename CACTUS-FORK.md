@@ -7,7 +7,7 @@ Remotes: `origin` → this fork, `upstream` → `sveltia/sveltia-cms` (read-only
 ## Changes
 
 - **AVIF and JPEG output formats for image transformations.** Upstream only allows `format: webp` in `media_libraries.*.config.transformations`. This fork unlocks `avif` and `jpeg` as well. AVIF has no native browser encoding, so it is encoded with the `@jsquash/avif` WASM library loaded from UNPKG at runtime (slower than native WebP encoding, especially for large images).
-- **Encoder failure now fails the transformation.** Upstream silently falls back to `canvas.convertToBlob()` when the jSquash encoder fails, which produces a PNG blob with mismatched content for formats like AVIF. This fork throws instead, and the original file is uploaded as is.
+- **Encoder failure now fails the transformation.** Upstream silently falls back to `canvas.convertToBlob()` when the jSquash encoder fails, which produces a PNG blob with mismatched content for formats like AVIF. This fork throws instead, and the original file is uploaded as is. Thumbnails keep a graceful fallback: `resolveThumbnailBlob` in `src/lib/services/assets/info.js` catches the failure and caches the original blob, since a thumbnail is decoration rather than data being uploaded.
 - **GIFs skip the catch-all `raster_image` transformation.** Re-encoding would flatten an animated GIF to a single frame. An explicit `transformations.gif` block still applies.
 - **Content-hash deduplication on upload.** Files whose Git object ID matches an existing asset in the target folder (or an earlier file in the same batch) are shown in a warning section of the upload confirmation dialog and skipped, so no duplicate commit is created. See `getDuplicatedFiles` in `src/lib/services/assets/index.js`.
 - **Clipboard paste in the upload flow.** The desktop upload dialog accepts Ctrl/Cmd+V (a window paste listener; the drop zone description mentions the shortcut), and the confirmation dialog accepts pasting more images into the pending batch. Pasted files are renamed `pasted-image-<timestamp>-<n>.<ext>`. A WeakSet guard keeps a single paste event from being consumed by both listeners, which used to add the image twice and flag the copy as a duplicate. See `src/lib/services/utils/clipboard.js`.
@@ -50,7 +50,7 @@ git tag vX.Y.Z-cactus.N          # match the upstream version it is based on, e.
 git push origin cactus --tags
 ```
 
-The build artifact is served via jsDelivr, e.g. `https://cdn.jsdelivr.net/gh/zouzonghao/sveltia-cms@v0.205.4-cactus.7/package/dist/sveltia-cms.js`. Always pin the tag, never the branch: jsDelivr caches branches for ~12 hours and tags are immutable. After releasing, update the script URL in the blog theme (`public/admin/index.html`).
+The build artifact is served via jsDelivr, e.g. `https://cdn.jsdelivr.net/gh/zouzonghao/sveltia-cms@v0.205.4-cactus.8/package/dist/sveltia-cms.js`. Always pin the tag, never the branch: jsDelivr caches branches for ~12 hours and tags are immutable. After releasing, update the script URL in the blog theme (`public/admin/index.html`).
 
 ## Syncing with upstream
 

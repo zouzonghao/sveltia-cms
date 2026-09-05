@@ -1,11 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import {
-  getPastedImageFiles,
-  isPasteEventHandled,
-  markPasteEventHandled,
-  readImageFilesFromClipboard,
-} from './clipboard';
+import { getPastedImageFiles, isPasteEventHandled, markPasteEventHandled } from './clipboard';
 
 describe('paste event guard', () => {
   it('should mark an event as handled and report it back', () => {
@@ -72,41 +67,6 @@ describe('utils/clipboard', () => {
       const event = /** @type {ClipboardEvent} */ (/** @type {any} */ ({ clipboardData: null }));
 
       expect(getPastedImageFiles(event)).toEqual([]);
-    });
-  });
-
-  describe('readImageFilesFromClipboard', () => {
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    it('should read an image file from the clipboard', async () => {
-      const blob = new Blob(['abc'], { type: 'image/png' });
-      const item = { types: ['image/png'], getType: vi.fn().mockResolvedValue(blob) };
-
-      vi.stubGlobal('navigator', { clipboard: { read: vi.fn().mockResolvedValue([item]) } });
-
-      const files = await readImageFilesFromClipboard();
-
-      expect(files).toHaveLength(1);
-      expect(files[0].type).toBe('image/png');
-      expect(files[0].name).toMatch(/^pasted-image-\d+\.png$/);
-    });
-
-    it('should throw when the clipboard holds no image', async () => {
-      const item = { types: ['text/plain'] };
-
-      vi.stubGlobal('navigator', { clipboard: { read: vi.fn().mockResolvedValue([item]) } });
-
-      await expect(readImageFilesFromClipboard()).rejects.toThrow('No image found in clipboard');
-    });
-
-    it('should throw when the clipboard cannot be read', async () => {
-      vi.stubGlobal('navigator', {
-        clipboard: { read: vi.fn().mockRejectedValue(new Error('denied')) },
-      });
-
-      await expect(readImageFilesFromClipboard()).rejects.toThrow('denied');
     });
   });
 });
